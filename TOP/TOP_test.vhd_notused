@@ -1,0 +1,144 @@
+--********************--
+-- ENSA FES --
+-- Filière : GSEII2
+--********************--
+--Title : Min-Sum Algorithme
+--Block : TOP rassemblage
+--*********************--
+--File : SRC
+--*********************--
+--                             Used Libraries
+--*********************--
+	
+	LIBRARY IEEE;
+	USE IEEE.STD_LOGIC_1164.ALL;
+	USE IEEE.NUMERIC_STD.ALL;
+
+	LIBRARY WORK;
+	USE WORK.mem_types.ALL;
+		
+--******************--
+--					ENTITY DECLARATION
+--******************--
+ENTITY TOP IS PORT(	
+	LC			: IN  layer_ctrl;
+	receive_llr : IN  T(34 DOWNTO 0);
+	vector_out  : OUT T(34 DOWNTO 0);
+	clk 		: IN STD_LOGIC;
+	rst 		: IN STD_LOGIC;
+	count_layer : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+	mem_adr 	: IN STD_LOGIC);
+END TOP;
+
+-- ********
+-- *                        RTL Description                             *
+-- ********
+
+ARCHITECTURE RTL OF TOP IS 
+	
+SIGNAL sig2      : Tb(18 downto 0);
+SIGNAL sig1,vect2, sig3, sig4, sig5 : T(18 downto 0);
+SIGNAL rawire      : T(15 DOWNTO 0);
+SIGNAL index_wire  : index(18 DOWNTO 0);
+SIGNAL shift_wire  : shift;
+SIGNAL sig6, sigf  : T(34 DOWNTO 0);
+
+COMPONENT top_glob_rd IS PORT(
+	LC: IN layer_ctrl;
+	mem_out : IN T(34 DOWNTO 0);
+	cpt : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+	vector_out: OUT T(18 DOWNTO 0);
+	raw_data: OUT T(15 DOWNTO 0);
+	ind : OUT index(18 DOWNTO 0);
+	used_layer : OUT shift
+);
+END COMPONENT;
+
+COMPONENT CNPU IS
+	PORT(
+	count_layer	   : IN   STD_LOGIC_VECTOR(3 DOWNTO 0);
+	vnpu_out  	   : IN   T(18 DOWNTO 0);
+	cnpu_out  	   : OUT  T(18 DOWNTO 0));
+END COMPONENT;
+
+COMPONENT LLR IS
+	PORT(
+    LLR_outf  	 : IN  T(18 DOWNTO 0);
+    CNP_outf  	 : IN  T(18 DOWNTO 0);
+    Add_sf    	 : OUT T(18 DOWNTO 0));
+END COMPONENT;
+
+COMPONENT VN IS
+	PORT(
+    R_LLR_outf   : IN  T(18 downto 0);
+    C_toV_outf   : IN  Tb(18 downto 0);
+    Subsf      	 : OUT T(18 downto 0));  
+END COMPONENT;
+
+COMPONENT memories IS
+	PORT(
+    C_to_V  	 : IN   T(18 DOWNTO 0);
+    Count_layer  : IN   STD_LOGIC_VECTOR(3 DOWNTO 0);
+    Mem_in       : IN   T(34 DOWNTO 0);
+    Mem_adr      : IN   STD_LOGIC;
+    CLK          : IN   STD_LOGIC;
+    reset        : IN   STD_LOGIC;
+    Receiv_LLR   : IN   T(34 DOWNTO 0);
+    C_to_V_out   : OUT  T(18 DOWNTO 0);
+    Receiv_LLR2  : OUT  T(34 DOWNTO 0));
+END COMPONENT;
+
+COMPONENT conv_T2Tb IS PORT(
+	R: IN T(18 DOWNTO 0);
+	S : OUT Tb(18 DOWNTO 0)
+);
+END COMPONENT;
+
+
+BEGIN 
+
+
+tp0: top_glob_rd PORT MAP(
+	LC => LC,
+	mem_out => sig6,
+	cpt => count_layer,
+	vector_out => sig1,
+	raw_data   => rawire,
+	ind 	   => index_wire,
+	used_layer => shift_wire);    
+
+tp1 : CNPU PORT MAP(
+	count_layer	 => count_layer,
+	vnpu_out  	 => sig3,
+	cnpu_out  	 => sig4);
+
+tp2 : LLR PORT MAP(
+    LLR_outf  	 => sig3,
+    CNP_outf  	 => sig4,
+    Add_sf    	 => sig5);
+
+tp3 : VN PORT MAP(
+    R_LLR_outf   => sig1,
+    C_toV_outf   => sig2,
+    Subsf      	 => sig3);
+
+tp4 : memories PORT MAP(
+    C_to_V  	 => sig4,
+    Count_layer  => count_layer,
+    Mem_in       => receive_llr,
+    Mem_adr      => mem_adr,
+    CLK          => clk,
+    reset        => rst,
+    Receiv_LLR   => receive_llr,
+    C_to_V_out   => vect2,
+    Receiv_LLR2  => sig6 );
+
+
+tp5: conv_T2Tb PORT MAP(
+	R => vect2,
+	S => sig2);
+
+
+vector_out <= sig6;
+
+END RTL;
