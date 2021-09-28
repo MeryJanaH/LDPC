@@ -1,4 +1,4 @@
-	LIBRARY IEEE;
+LIBRARY IEEE;
 	USE IEEE.STD_LOGIC_1164.ALL;
 	USE IEEE.NUMERIC_STD.ALL;
 
@@ -128,6 +128,12 @@ WAIT FOR 200 NS;
 
 
 MemAdr <= '0';
+FOR i IN 11 DOWNTO 0 LOOP
+	cpt <= std_logic_vector (unsigned(cpt) + 1);
+	WAIT FOR 200 NS;
+END LOOP;
+cpt<= "0000";
+WAIT FOR 50 NS;
 FOR i IN 11 DOWNTO 0 LOOP
 	cpt <= std_logic_vector (unsigned(cpt) + 1);
 	WAIT FOR 200 NS;
